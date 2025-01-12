@@ -1,0 +1,193 @@
+#!/bin/bash
+
+DATA_FILE="/etc/reminfo/reminfo_entries"
+CONFIG_FILE="/etc/reminfo/reminfo_config"
+
+if [ -f "$CONFIG_FILE" ]; then
+    SHOW_LOGO=$(grep -E "^SHOW_LOGO=" "$CONFIG_FILE" | cut -d'=' -f2)
+else
+    SHOW_LOGO="no"
+fi
+
+show_menu() {
+    # Check
+    if [ -f "$DATA_FILE" ] && [ -r "$DATA_FILE" ]; then
+        if [ -s "$DATA_FILE" ]; then
+            echo ""
+            entry_number=1
+            while IFS= read -r line; do
+                # Skip empty lines
+                if [ -z "$line" ]; then
+                    continue
+                fi
+
+                # Extract name, type, and description from the line
+                name=$(echo "$line" | awk -F'->' '{print $1}')
+                type=$(echo "$line" | awk -F'->' '{print $2}')
+                description=$(echo "$line" | awk -F'->' '{print $3}')
+
+                # Validate that all fields are present
+                if [ -n "$name" ] && [ -n "$type" ] && [ -n "$description" ]; then
+                    if [ "$type" == "text" ]; then
+                        printf "%2d) %s = \"%s\"\n" "$entry_number" "$name" "$description"
+                    else
+                        printf "%2d) %s = %s\n" "$entry_number" "$name" "$description"
+                    fi
+                    ((entry_number++))
+                else
+                    echo "Warning: Invalid entry in data file: $line" >&2
+                fi
+            done < "$DATA_FILE"
+        else
+            echo "No data stored. Use '-a' to add data."
+        fi
+    else
+        echo "No data stored. Use '-a' to add data."
+    fi
+    echo ""
+}
+
+add_entry() {
+    eval "clear"
+    echo -n "Enter Title : "
+    read name
+    
+    eval "clear"
+
+    echo "1) Command"
+    echo "2) Text"
+    echo "3) Config File"
+    echo "4) Directory"
+    echo -ne "\nSelect data type : "
+    read type_choice
+
+    case "$type_choice" in
+        1)
+            type="cmd"
+            eval "clear"
+            echo "Enter command : "
+            read description
+            ;;
+        2)
+            type="text"
+            eval "clear"
+            echo -en "Enter the text (less than 50 char ) : "
+            read description
+            description=$(echo "$description" | cut -c 1-50)
+            ;;
+        3)
+            type="config"
+            eval "clear"
+            echo -en "Enter file path : "
+            read path
+            description="$path"
+            ;;
+        4)
+            type="dir"
+            echo -en "Enter the directory path :"
+            read path
+            description="$path"
+            ;;
+        *)
+            echo "Invalid selection."
+            return
+            ;;
+    esac
+
+    echo "$name->$type->$description" >> "$DATA_FILE"
+    echo "Entry added successfully!"
+}
+
+delete_entry() {
+    entry_number=$1
+    if [ ! -f "$DATA_FILE" ]; then
+        echo "No stored entries found."
+        return
+    fi
+
+    total_lines=$(wc -l < "$DATA_FILE")
+    if (( entry_number < 1 || entry_number > total_lines )); then
+        echo "Invalid entry number."
+        return
+    fi
+
+    sed -i "${entry_number}d" "$DATA_FILE"
+    echo "Entry $entry_number deleted successfully."
+}
+
+execute_entry() {
+    entry_number=$1
+    if [ ! -f "$DATA_FILE" ]; then
+        echo "No stored entries found."
+        return
+    fi
+
+    entry=$(sed -n "${entry_number}p" "$DATA_FILE")
+    if [ -z "$entry" ]; then
+        echo "Invalid choice."
+        return
+    fi
+
+    name=$(echo "$entry" | awk -F'->' '{print $1}')
+    type=$(echo "$entry" | awk -F'->' '{print $2}')
+    description=$(echo "$entry" | awk -F'->' '{print $3}')
+
+    if [ -z "$name" ] || [ -z "$type" ] || [ -z "$description" ]; then
+        echo "Error: Invalid entry format."
+        return
+    fi
+
+    case "$type" in
+        dir)
+            echo "Changing directory to $description"
+            cd "$description" 2>/dev/null || echo "Error: Unable to change directory."
+            ;;
+        config)
+            sudo nano "$description" || echo "Error: Unable to open config file."
+            ;;
+        text)
+            echo "$description"
+            ;;
+        cmd)
+            eval "$description"
+            ;;
+        *)
+            echo "Error: Unknown entry type."
+            ;;
+    esac
+}
+
+clear_entries() {
+    if [ -f "$DATA_FILE" ]; then
+        rm "$DATA_FILE"
+        echo "All entries cleared."
+    else
+        echo "No entries to clear."
+    fi
+}
+
+# Main logic to handle arguments
+if [ -z "$1" ]; then
+    show_menu
+elif [[ "$1" == "-a" ]]; then
+    add_entry
+elif [[ "$1" == "-c" ]]; then
+    clear_entries
+elif [[ "$1" == "-d" ]]; then
+    if [[ -z "$2" || ! "$2" =~ ^[0-9]+$ ]]; then
+        echo "Usage: reminfo.sh -d <number>"
+        exit 1
+    fi
+    delete_entry "$2"
+elif [[ "$1" =~ ^[0-9]+$ ]]; then
+    execute_entry "$1"
+else
+    echo -e "\nUsage Reminfo :\n"
+    echo "-a : Add a new entry."
+    echo "-c : Clear all stored entries."
+    echo "-d : Delete an entry by its number "
+    echo ""
+    exit 1
+fi
+
+exit 0

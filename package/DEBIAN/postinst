@@ -1,0 +1,4 @@
+#!/bin/bash
+set -e  # Ensure the script exits on errors
+chmod 755 /usr/bin/reminfo
+exit 0

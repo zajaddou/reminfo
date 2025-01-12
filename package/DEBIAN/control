@@ -1,0 +1,9 @@
+Package: reminfo
+Version: 1.0.0
+Section: utils
+Priority: optional
+Architecture: amd64
+Depends: procps, bash, lsb-release
+Maintainer: Zakaria Ajaddou <zajaddou@student.1337.ma>
+Description: Lightweight command-line tool providing system information such as
+ CPU, memory, disk usage, network stats, and more.
