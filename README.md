@@ -53,16 +53,14 @@ reminfo [OPTION]
 
 ### Available Options:
 
-- `-a, --add`: Add a new entry (command, config file, directory, or note)
-- `-c, --clear`: Clear all stored entries
-- `-d, --delete [ENTRY]`: Delete a specific entry by number
-- `-h, --help`: Display help message
-- `-v, --view`: View all stored entries
-- `     --msg`: Enable labeled output for easier readability
+- `-a `: Add a new entry (command, config file, directory, or note)
+- `-c `: Clear all stored entries
+- `-d [ENTRY]`: Delete a specific entry by number
+- `-h `: Display help message
 
 ### Examples:
 
-Add a new command:
+Add a new entry:
 ```bash
 reminfo -a
 ```
