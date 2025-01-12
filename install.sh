@@ -19,7 +19,6 @@ version=$(/usr/bin/awk '/Version/ {print $2}' package/DEBIAN/control)
 
 # Banner and version info
 /usr/bin/echo -e "\n
-              
   ____   v:$version      _        __       
  |  _ \ ___ _ __ ___ (_)_ __  / _| ___  
  | |_) / _ \ '_ \` _ \| | '_ \| |_ / _ \ 
