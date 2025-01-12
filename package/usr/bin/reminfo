@@ -1,12 +1,14 @@
 #!/bin/bash
 
+# Define
 DATA_FILE="/etc/reminfo/reminfo_entries"
 CONFIG_FILE="/etc/reminfo/reminfo_config"
 
-if [ -f "$CONFIG_FILE" ]; then
-    SHOW_LOGO=$(grep -E "^SHOW_LOGO=" "$CONFIG_FILE" | cut -d'=' -f2)
-else
-    SHOW_LOGO="no"
+if [ ! -f "$DATA_FILE" ]; then
+    # Create the directory if it doesn't exist
+    sudo mkdir -p /etc/reminfo
+    sudo touch "$DATA_FILE"
+    sudo chmod 766 "$DATA_FILE"
 fi
 
 show_menu() {
@@ -65,7 +67,7 @@ add_entry() {
         1)
             type="cmd"
             eval "clear"
-            echo "Enter command : "
+            echo -en "Enter command : "
             read description
             ;;
         2)
