@@ -63,17 +63,18 @@ done
 # Compile the package
 /usr/bin/echo " + Building Package..."
 dpkg-deb --build package > /dev/null 2>&1
+mv package.deb reminfo.deb
 
 # Install the package
 /usr/bin/echo " + Installing Package..."
-sudo dpkg -i package.deb > /dev/null 2>&1
+sudo dpkg -i reminfo.deb > /dev/null 2>&1
 if [ $? -ne 0 ]; then
     /usr/bin/echo " - Failed to install the package. Please check the package and dependencies."
     exit 1
 fi
 
 # Remove the .deb file after installation
-/usr/bin/rm -rf package.deb
+/usr/bin/rm -rf reminfo.deb
 
 # Final message
 /usr/bin/echo -e "\n * Installation Complete! 🎉\n"
